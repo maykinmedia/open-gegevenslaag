@@ -5,13 +5,12 @@ API's vormen de toegangspoort tot het ontsluiten en opslaan van lokale
 overheidsgegevens op een gestandaardiseerde wijze.
 
 Door de implementatie van het Common Ground principe "component gebaseerd" is 
-besloten te werken met microservices. De Open Gegevenslaag bestaat daarom enkel
-virtueel en zijn er verschillende componenten die één of meerdere API's 
-bevatten.
+besloten te werken met microservices. Tezamen noemen we dit de 
+**Open Gegevenslaag**. De Open Gegevenslaag bestaat daarom enkel virtueel en 
+zijn er verschillende componenten die één of meerdere API's bevatten.
 
-Tezamen noemen we dit de **Open Gegevenslaag**. Applicaties komen het beste tot
-hun recht als de verschillende API's in samenhang met elkaar worden gebruikt 
-maar dit is niet verplicht.
+Applicaties komen het beste tot hun recht als de verschillende API's in 
+samenhang met elkaar worden gebruikt maar dit is niet verplicht.
 
 Alle specificaties, (software)componenten en documentatie zijn open source 
 beschikbaar onder de EUPL.
