@@ -38,6 +38,50 @@ beschikbaar onder de EUPL.
 ## Gebruik
 
 Wil je aan de slag met de Open Gegevenslaag? Je kan zelf aan de slag met de
-componenten of het geheel (of een deel) veilig en beheerd afnemen bij een 
-leverancier. Kijk daarvoor op het 
+componenten of het geheel (of een deel) veilig en beheerd afnemen bij een
+leverancier. Kijk daarvoor op het
 [Open Overheid Initatief](https://opengem.nl/)
+
+### Lokaal opstarten met Docker Compose
+
+Alle componenten kunnen lokaal worden opgestart met de meegeleverde
+`docker-compose.yml`. Je hebt hiervoor [Docker](https://docs.docker.com/get-docker/)
+en [Docker Compose](https://docs.docker.com/compose/install/) nodig.
+
+**Opstarten:**
+
+```bash
+docker compose up
+```
+
+De eerste keer worden alle databases aangemaakt en geconfigureerd. Dit kan
+enkele minuten duren.
+
+Zodra alle services draaien zijn de componenten bereikbaar op:
+
+| Component | URL |
+|---|---|
+| Open Zaak | http://localhost:8000 |
+| Open Notificaties | http://localhost:8001 |
+| Objects API | http://localhost:8002 |
+| Objecttypes API | http://localhost:8003 |
+| Open Klant | http://localhost:8004 |
+| Open Product | http://localhost:8005 |
+| Open VTB | http://localhost:8006 |
+
+De beheerdersinterface is bereikbaar via `/admin` op elk van bovenstaande
+adressen. De standaard inloggegevens zijn gebruikersnaam `admin` en
+wachtwoord `admin`.
+
+**Eén component opstarten:**
+
+```bash
+docker compose up open-zaak
+```
+
+**Stoppen en opruimen:**
+
+```bash
+docker compose down        # stop containers, behoud data
+docker compose down -v     # stop containers en verwijder ook de database
+```

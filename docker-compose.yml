@@ -1,0 +1,467 @@
+---
+# Open Gegevenslaag — combined development environment
+#
+# Services and their ports:
+#   - Open Zaak          http://localhost:8000
+#   - Open Notificaties  http://localhost:8001
+#   - Objects API        http://localhost:8002
+#   - Objecttypes API    http://localhost:8003
+#   - Open Klant         http://localhost:8004
+#   - Open Product       http://localhost:8005
+#   - Open VTB           http://localhost:8006
+
+x-django-env: &django-env-common
+  IS_HTTPS: "no"
+  ALLOWED_HOSTS: "*"
+  DISABLE_2FA: "yes"
+  DB_HOST: db
+
+x-db-env-openzaak: &db-env-openzaak
+  DB_NAME: openzaak
+  DB_USER: openzaak
+  DB_PASSWORD: openzaak
+
+x-db-env-opennotificaties: &db-env-opennotificaties
+  DB_NAME: opennotificaties
+  DB_USER: opennotificaties
+  DB_PASSWORD: opennotificaties
+
+x-db-env-objects: &db-env-objects
+  DB_NAME: objects
+  DB_USER: objects
+  DB_PASSWORD: objects
+
+x-db-env-objecttypes: &db-env-objecttypes
+  DB_NAME: objecttypes
+  DB_USER: objecttypes
+  DB_PASSWORD: objecttypes
+
+x-db-env-openklant: &db-env-openklant
+  DB_NAME: openklant
+  DB_USER: openklant
+  DB_PASSWORD: openklant
+
+x-db-env-openproduct: &db-env-openproduct
+  DB_NAME: openproduct
+  DB_USER: openproduct
+  DB_PASSWORD: openproduct
+
+x-db-env-openvtb: &db-env-openvtb
+  DB_NAME: openvtb
+  DB_USER: openvtb
+  DB_PASSWORD: openvtb
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Shared infrastructure
+  # ---------------------------------------------------------------------------
+
+  db:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4.0-alpine
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Open Zaak
+  # http://localhost:8000
+  # ---------------------------------------------------------------------------
+
+  open-zaak-init:
+    image: openzaak/open-zaak:latest
+    environment:
+      <<: [*django-env-common, *db-env-openzaak]
+      DJANGO_SETTINGS_MODULE: openzaak.conf.docker
+      SECRET_KEY: open-zaak-secret
+      CACHE_DEFAULT: redis:6379/0
+      CACHE_AXES: redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OPENZAAK_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_PASSWORD: admin
+      OPENZAAK_SUPERUSER_EMAIL: admin@localhost
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  open-zaak:
+    image: openzaak/open-zaak:latest
+    ports:
+      - "8000:8000"
+    environment:
+      <<: [*django-env-common, *db-env-openzaak]
+      DJANGO_SETTINGS_MODULE: openzaak.conf.docker
+      SECRET_KEY: open-zaak-secret
+      CACHE_DEFAULT: redis:6379/0
+      CACHE_AXES: redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      open-zaak-init:
+        condition: service_completed_successfully
+
+  open-zaak-celery:
+    image: openzaak/open-zaak:latest
+    environment:
+      <<: [*django-env-common, *db-env-openzaak]
+      DJANGO_SETTINGS_MODULE: openzaak.conf.docker
+      SECRET_KEY: open-zaak-secret
+      CACHE_DEFAULT: redis:6379/0
+      CACHE_AXES: redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    command: /celery_worker.sh
+    depends_on:
+      open-zaak-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Open Notificaties
+  # http://localhost:8001
+  # ---------------------------------------------------------------------------
+
+  open-notificaties-init:
+    image: openzaak/open-notificaties:latest
+    environment:
+      <<: [*django-env-common, *db-env-opennotificaties]
+      DJANGO_SETTINGS_MODULE: nrc.conf.docker
+      SECRET_KEY: open-notificaties-secret
+      CACHE_DEFAULT: redis:6379/2
+      CACHE_AXES: redis:6379/3
+      RABBITMQ_HOST: rabbitmq
+      PUBLISH_BROKER_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/4
+      OPENNOTIFICATIES_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_PASSWORD: admin
+      OPENNOTIFICATIES_SUPERUSER_EMAIL: admin@localhost
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  open-notificaties:
+    image: openzaak/open-notificaties:latest
+    ports:
+      - "8001:8000"
+    environment:
+      <<: [*django-env-common, *db-env-opennotificaties]
+      DJANGO_SETTINGS_MODULE: nrc.conf.docker
+      SECRET_KEY: open-notificaties-secret
+      CACHE_DEFAULT: redis:6379/2
+      CACHE_AXES: redis:6379/3
+      RABBITMQ_HOST: rabbitmq
+      PUBLISH_BROKER_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/4
+    depends_on:
+      open-notificaties-init:
+        condition: service_completed_successfully
+
+  open-notificaties-celery:
+    image: openzaak/open-notificaties:latest
+    environment:
+      <<: [*django-env-common, *db-env-opennotificaties]
+      DJANGO_SETTINGS_MODULE: nrc.conf.docker
+      SECRET_KEY: open-notificaties-secret
+      CACHE_DEFAULT: redis:6379/2
+      CACHE_AXES: redis:6379/3
+      RABBITMQ_HOST: rabbitmq
+      PUBLISH_BROKER_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/4
+    command: /celery_worker.sh
+    depends_on:
+      open-notificaties-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Objects API
+  # http://localhost:8002
+  # ---------------------------------------------------------------------------
+
+  objects-api-init:
+    image: maykinmedia/objects-api:latest
+    environment:
+      <<: [*django-env-common, *db-env-objects]
+      DJANGO_SETTINGS_MODULE: objects.conf.docker
+      SECRET_KEY: objects-api-secret
+      CACHE_DEFAULT: redis:6379/5
+      CACHE_AXES: redis:6379/5
+      CELERY_BROKER_URL: redis://redis:6379/6
+      CELERY_RESULT_BACKEND: redis://redis:6379/6
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  objects-api:
+    image: maykinmedia/objects-api:latest
+    ports:
+      - "8002:8000"
+    environment:
+      <<: [*django-env-common, *db-env-objects]
+      DJANGO_SETTINGS_MODULE: objects.conf.docker
+      SECRET_KEY: objects-api-secret
+      CACHE_DEFAULT: redis:6379/5
+      CACHE_AXES: redis:6379/5
+      CELERY_BROKER_URL: redis://redis:6379/6
+      CELERY_RESULT_BACKEND: redis://redis:6379/6
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+    depends_on:
+      objects-api-init:
+        condition: service_completed_successfully
+
+  objects-api-celery:
+    image: maykinmedia/objects-api:latest
+    environment:
+      <<: [*django-env-common, *db-env-objects]
+      DJANGO_SETTINGS_MODULE: objects.conf.docker
+      SECRET_KEY: objects-api-secret
+      CACHE_DEFAULT: redis:6379/5
+      CACHE_AXES: redis:6379/5
+      CELERY_BROKER_URL: redis://redis:6379/6
+      CELERY_RESULT_BACKEND: redis://redis:6379/6
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+    command: /celery_worker.sh
+    depends_on:
+      objects-api-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Objecttypes API
+  # http://localhost:8003
+  # ---------------------------------------------------------------------------
+
+  objecttypes-api-init:
+    image: maykinmedia/objecttypes-api:latest
+    environment:
+      <<: [*django-env-common, *db-env-objecttypes]
+      DJANGO_SETTINGS_MODULE: objecttypes.conf.docker
+      SECRET_KEY: objecttypes-api-secret
+      CACHE_DEFAULT: redis:6379/7
+      CACHE_AXES: redis:6379/7
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+      SUBPATH: /
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  objecttypes-api:
+    image: maykinmedia/objecttypes-api:latest
+    ports:
+      - "8003:8000"
+    environment:
+      <<: [*django-env-common, *db-env-objecttypes]
+      DJANGO_SETTINGS_MODULE: objecttypes.conf.docker
+      SECRET_KEY: objecttypes-api-secret
+      CACHE_DEFAULT: redis:6379/7
+      CACHE_AXES: redis:6379/7
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+      SUBPATH: /
+    depends_on:
+      objecttypes-api-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Open Klant
+  # http://localhost:8004
+  # ---------------------------------------------------------------------------
+
+  open-klant-init:
+    image: maykinmedia/open-klant:latest
+    environment:
+      <<: [*django-env-common, *db-env-openklant]
+      DJANGO_SETTINGS_MODULE: openklant.conf.docker
+      SECRET_KEY: open-klant-secret
+      CACHE_DEFAULT: redis:6379/8
+      CACHE_AXES: redis:6379/8
+      CELERY_BROKER_URL: redis://redis:6379/8
+      CELERY_RESULT_BACKEND: redis://redis:6379/8
+      LOG_NOTIFICATIONS_IN_DB: "yes"
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+      CELERY_WORKER_NAME: celery@docker
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  open-klant:
+    image: maykinmedia/open-klant:latest
+    ports:
+      - "8004:8000"
+    environment:
+      <<: [*django-env-common, *db-env-openklant]
+      DJANGO_SETTINGS_MODULE: openklant.conf.docker
+      SECRET_KEY: open-klant-secret
+      CACHE_DEFAULT: redis:6379/8
+      CACHE_AXES: redis:6379/8
+      CELERY_BROKER_URL: redis://redis:6379/8
+      CELERY_RESULT_BACKEND: redis://redis:6379/8
+      LOG_NOTIFICATIONS_IN_DB: "yes"
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+    depends_on:
+      open-klant-init:
+        condition: service_completed_successfully
+
+  open-klant-celery:
+    image: maykinmedia/open-klant:latest
+    environment:
+      <<: [*django-env-common, *db-env-openklant]
+      DJANGO_SETTINGS_MODULE: openklant.conf.docker
+      SECRET_KEY: open-klant-secret
+      CACHE_DEFAULT: redis:6379/8
+      CACHE_AXES: redis:6379/8
+      CELERY_BROKER_URL: redis://redis:6379/8
+      CELERY_RESULT_BACKEND: redis://redis:6379/8
+      LOG_NOTIFICATIONS_IN_DB: "yes"
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "True"
+      CELERY_WORKER_NAME: celery@docker
+    command: /celery_worker.sh
+    depends_on:
+      open-klant-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Open Product
+  # http://localhost:8005
+  # ---------------------------------------------------------------------------
+
+  open-product-init:
+    image: maykinmedia/open-product:latest
+    environment:
+      <<: [*django-env-common, *db-env-openproduct]
+      DJANGO_SETTINGS_MODULE: openproduct.conf.docker
+      SECRET_KEY: open-product-secret
+      CACHE_DEFAULT: redis:6379/9
+      CELERY_BROKER_URL: redis://redis:6379/10
+      CELERY_RESULT_BACKEND: redis://redis:6379/10
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  open-product:
+    image: maykinmedia/open-product:latest
+    ports:
+      - "8005:8000"
+    environment:
+      <<: [*django-env-common, *db-env-openproduct]
+      DJANGO_SETTINGS_MODULE: openproduct.conf.docker
+      SECRET_KEY: open-product-secret
+      CACHE_DEFAULT: redis:6379/9
+      CELERY_BROKER_URL: redis://redis:6379/10
+      CELERY_RESULT_BACKEND: redis://redis:6379/10
+    depends_on:
+      open-product-init:
+        condition: service_completed_successfully
+
+  open-product-celery:
+    image: maykinmedia/open-product:latest
+    environment:
+      <<: [*django-env-common, *db-env-openproduct]
+      DJANGO_SETTINGS_MODULE: openproduct.conf.docker
+      SECRET_KEY: open-product-secret
+      CACHE_DEFAULT: redis:6379/9
+      CELERY_BROKER_URL: redis://redis:6379/10
+      CELERY_RESULT_BACKEND: redis://redis:6379/10
+    command: /celery_worker.sh
+    depends_on:
+      open-product-init:
+        condition: service_completed_successfully
+
+  # ---------------------------------------------------------------------------
+  # Open VTB
+  # http://localhost:8006
+  # ---------------------------------------------------------------------------
+
+  open-vtb-init:
+    image: maykinmedia/open-vtb:latest
+    environment:
+      <<: [*django-env-common, *db-env-openvtb]
+      DJANGO_SETTINGS_MODULE: openvtb.conf.docker
+      SECRET_KEY: open-vtb-secret
+      CACHE_DEFAULT: redis:6379/11
+      CACHE_AXES: redis:6379/11
+      CELERY_BROKER_URL: redis://redis:6379/11
+      CELERY_RESULT_BACKEND: redis://redis:6379/11
+      LOG_NOTIFICATIONS_IN_DB: "yes"
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "False"
+    command: /setup_configuration.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  open-vtb:
+    image: maykinmedia/open-vtb:latest
+    ports:
+      - "8006:8000"
+    environment:
+      <<: [*django-env-common, *db-env-openvtb]
+      DJANGO_SETTINGS_MODULE: openvtb.conf.docker
+      SECRET_KEY: open-vtb-secret
+      CACHE_DEFAULT: redis:6379/11
+      CACHE_AXES: redis:6379/11
+      CELERY_BROKER_URL: redis://redis:6379/11
+      CELERY_RESULT_BACKEND: redis://redis:6379/11
+      LOG_NOTIFICATIONS_IN_DB: "yes"
+      DB_CONN_MAX_AGE: "0"
+      DB_POOL_ENABLED: "False"
+    depends_on:
+      open-vtb-init:
+        condition: service_completed_successfully
+
+volumes:
+  db_data:
