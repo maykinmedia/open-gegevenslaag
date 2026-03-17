@@ -34,6 +34,9 @@ beschikbaar onder de EUPL.
 | Verzoeken API         | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-vtb/master/src/openvtb/components/verzoeken/openapi.yaml) | [Open VTB](https://github.com/maykinmedia/open-vtb) | Common Ground concept |
 | Taken API             | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-vtb/master/src/openvtb/components/taken/openapi.yaml) | [Open VTB](https://github.com/maykinmedia/open-vtb) | Common Ground concept |
 | Berichten API         | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-vtb/master/src/openvtb/components/berichten/openapi.yaml) | [Open VTB](https://github.com/maykinmedia/open-vtb) | Common Ground concept |
+| Identiteit API        | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-organisatie/main/src/identiteit-openapi.yaml) | [Open Organisatie](https://github.com/maykinmedia/open-organisatie) | Common Ground concept |
+| Organisatie API       | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-organisatie/main/src/organisatie-openapi.yaml) | [Open Organisatie](https://github.com/maykinmedia/open-organisatie) | Common Ground concept |
+| Plannen API           | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-plan/main/src/plan-openapi.yaml) | [Open Plan](https://github.com/maykinmedia/open-plan) | Common Ground concept |
 
 ## Gebruik
 
