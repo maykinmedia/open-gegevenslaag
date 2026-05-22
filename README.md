@@ -38,6 +38,7 @@ naar [VNG MijnServices](https://vng.nl/MijnServices)
 | Identiteit API | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-organisatie/main/src/identiteit-openapi.yaml) | [Open Organisatie](https://github.com/maykinmedia/open-organisatie) | Common Ground concept | - |
 | Organisatie API | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-organisatie/main/src/organisatie-openapi.yaml) | [Open Organisatie](https://github.com/maykinmedia/open-organisatie) | Common Ground concept | - |
 | Plannen API | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-plan/main/src/plan-openapi.yaml) | [Open Plan](https://github.com/maykinmedia/open-plan) | Common Ground concept | MijnPlan |
+| Referentielijsten API | [ReDoc](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/referentielijsten/master/src/referentielijsten/api/openapi.yaml) | [Referentielijsten](https://github.com/maykinmedia/referentielijsten) | Maykin concept |  |
 
 ## Gebruik
 
