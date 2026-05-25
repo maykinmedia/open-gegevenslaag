@@ -29,19 +29,19 @@ x-web-resources: &web-resources
   deploy:
     resources:
       limits:
-        memory: 384M
+        memory: 512M
 
 x-celery-resources: &celery-resources
   deploy:
     resources:
       limits:
-        memory: 384M
+        memory: 512M
 
 x-init-resources: &init-resources
   deploy:
     resources:
       limits:
-        memory: 256M
+        memory: 384M
 
 x-db-env-openzaak: &db-env-openzaak
   DB_NAME: openzaak
