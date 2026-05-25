@@ -5,17 +5,16 @@
 #   - Open Zaak          http://localhost:8000
 #   - Open Notificaties  http://localhost:8001
 #   - Objects API        http://localhost:8002
-#   - Objecttypes API    http://localhost:8003
 #   - Open Klant         http://localhost:8004
 #   - Open Product       http://localhost:8005
 #   - Open VTB           http://localhost:8006
 #
 # Infrastructure (db, redis, rabbitmq) always starts.
-# Application services are grouped by profile — start only what you need:
+# Start only what you need by specifying service names:
 #
-#   docker compose --profile open-zaak up
-#   docker compose --profile open-zaak --profile open-notificaties up
-#   docker compose --profile all up   # everything
+#   docker compose up open-zaak
+#   docker compose up open-zaak open-notificaties
+#   docker compose up   # everything
 
 x-django-env: &django-env-common
   IS_HTTPS: "no"
@@ -58,11 +57,6 @@ x-db-env-objects: &db-env-objects
   DB_NAME: objects
   DB_USER: objects
   DB_PASSWORD: objects
-
-x-db-env-objecttypes: &db-env-objecttypes
-  DB_NAME: objecttypes
-  DB_USER: objecttypes
-  DB_PASSWORD: objecttypes
 
 x-db-env-openklant: &db-env-openklant
   DB_NAME: openklant
@@ -137,12 +131,10 @@ services:
   # ---------------------------------------------------------------------------
   # Open Zaak
   # http://localhost:8000
-  # docker compose --profile open-zaak up
   # ---------------------------------------------------------------------------
 
   open-zaak-init:
     image: openzaak/open-zaak:latest
-    profiles: [open-zaak, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-openzaak]
@@ -164,7 +156,6 @@ services:
 
   open-zaak:
     image: openzaak/open-zaak:latest
-    profiles: [open-zaak, all]
     <<: *web-resources
     ports:
       - "8000:8000"
@@ -182,7 +173,6 @@ services:
 
   open-zaak-celery:
     image: openzaak/open-zaak:latest
-    profiles: [open-zaak, all]
     <<: *celery-resources
     environment:
       <<: [*django-env-common, *db-env-openzaak]
@@ -200,12 +190,10 @@ services:
   # ---------------------------------------------------------------------------
   # Open Notificaties
   # http://localhost:8001
-  # docker compose --profile open-notificaties up
   # ---------------------------------------------------------------------------
 
   open-notificaties-init:
     image: openzaak/open-notificaties:latest
-    profiles: [open-notificaties, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-opennotificaties]
@@ -231,7 +219,6 @@ services:
 
   open-notificaties:
     image: openzaak/open-notificaties:latest
-    profiles: [open-notificaties, all]
     <<: *web-resources
     ports:
       - "8001:8000"
@@ -251,7 +238,6 @@ services:
 
   open-notificaties-celery:
     image: openzaak/open-notificaties:latest
-    profiles: [open-notificaties, all]
     <<: *celery-resources
     environment:
       <<: [*django-env-common, *db-env-opennotificaties]
@@ -271,12 +257,10 @@ services:
   # ---------------------------------------------------------------------------
   # Objects API
   # http://localhost:8002
-  # docker compose --profile objects-api up
   # ---------------------------------------------------------------------------
 
   objects-api-init:
     image: maykinmedia/objects-api:latest
-    profiles: [objects-api, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-objects]
@@ -297,7 +281,6 @@ services:
 
   objects-api:
     image: maykinmedia/objects-api:latest
-    profiles: [objects-api, all]
     <<: *web-resources
     ports:
       - "8002:8000"
@@ -317,7 +300,6 @@ services:
 
   objects-api-celery:
     image: maykinmedia/objects-api:latest
-    profiles: [objects-api, all]
     <<: *celery-resources
     environment:
       <<: [*django-env-common, *db-env-objects]
@@ -334,60 +316,14 @@ services:
       objects-api-init:
         condition: service_completed_successfully
 
-  # ---------------------------------------------------------------------------
-  # Objecttypes API
-  # http://localhost:8003
-  # docker compose --profile objecttypes-api up
-  # ---------------------------------------------------------------------------
-
-  objecttypes-api-init:
-    image: maykinmedia/objecttypes-api:latest
-    profiles: [objecttypes-api, all]
-    <<: *init-resources
-    environment:
-      <<: [*django-env-common, *db-env-objecttypes]
-      DJANGO_SETTINGS_MODULE: objecttypes.conf.docker
-      SECRET_KEY: objecttypes-api-secret
-      CACHE_DEFAULT: redis:6379/7
-      CACHE_AXES: redis:6379/7
-      DB_CONN_MAX_AGE: "0"
-      DB_POOL_ENABLED: "True"
-      SUBPATH: /
-    command: /setup_configuration.sh
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  objecttypes-api:
-    image: maykinmedia/objecttypes-api:latest
-    profiles: [objecttypes-api, all]
-    <<: *web-resources
-    ports:
-      - "8003:8000"
-    environment:
-      <<: [*django-env-common, *db-env-objecttypes]
-      DJANGO_SETTINGS_MODULE: objecttypes.conf.docker
-      SECRET_KEY: objecttypes-api-secret
-      CACHE_DEFAULT: redis:6379/7
-      CACHE_AXES: redis:6379/7
-      DB_CONN_MAX_AGE: "0"
-      DB_POOL_ENABLED: "True"
-      SUBPATH: /
-    depends_on:
-      objecttypes-api-init:
-        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Open Klant
   # http://localhost:8004
-  # docker compose --profile open-klant up
   # ---------------------------------------------------------------------------
 
   open-klant-init:
     image: maykinmedia/open-klant:latest
-    profiles: [open-klant, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-openklant]
@@ -410,7 +346,6 @@ services:
 
   open-klant:
     image: maykinmedia/open-klant:latest
-    profiles: [open-klant, all]
     <<: *web-resources
     ports:
       - "8004:8000"
@@ -431,7 +366,6 @@ services:
 
   open-klant-celery:
     image: maykinmedia/open-klant:latest
-    profiles: [open-klant, all]
     <<: *celery-resources
     environment:
       <<: [*django-env-common, *db-env-openklant]
@@ -453,12 +387,10 @@ services:
   # ---------------------------------------------------------------------------
   # Open Product
   # http://localhost:8005
-  # docker compose --profile open-product up
   # ---------------------------------------------------------------------------
 
   open-product-init:
     image: maykinmedia/open-product:latest
-    profiles: [open-product, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-openproduct]
@@ -476,7 +408,6 @@ services:
 
   open-product:
     image: maykinmedia/open-product:latest
-    profiles: [open-product, all]
     <<: *web-resources
     ports:
       - "8005:8000"
@@ -493,7 +424,6 @@ services:
 
   open-product-celery:
     image: maykinmedia/open-product:latest
-    profiles: [open-product, all]
     <<: *celery-resources
     environment:
       <<: [*django-env-common, *db-env-openproduct]
@@ -510,12 +440,10 @@ services:
   # ---------------------------------------------------------------------------
   # Open VTB
   # http://localhost:8006
-  # docker compose --profile open-vtb up
   # ---------------------------------------------------------------------------
 
   open-vtb-init:
     image: maykinmedia/open-vtb:latest
-    profiles: [open-vtb, all]
     <<: *init-resources
     environment:
       <<: [*django-env-common, *db-env-openvtb]
@@ -537,7 +465,6 @@ services:
 
   open-vtb:
     image: maykinmedia/open-vtb:latest
-    profiles: [open-vtb, all]
     <<: *web-resources
     ports:
       - "8006:8000"
