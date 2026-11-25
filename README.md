@@ -19,8 +19,7 @@ naar [VNG MijnServices](https://vng.nl/MijnServices)
 Informatiemodel
 ===============
 
-.. image:: assets/open-gegevenslaag.png
-   :alt: Open Gegevenslaag informatiemodel
+[![Open Gegevenslaag informatiemodel](assets/open-gegevenslaag.png)](assets/open-gegevenslaag.png))
 
 ## Overzicht
 
