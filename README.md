@@ -16,6 +16,12 @@ Alle specificaties, (software)componenten en documentatie zijn open source
 beschikbaar onder de EUPL. Hieronder staat het overzicht, inclusief de relatie
 naar [VNG MijnServices](https://vng.nl/MijnServices)
 
+## Informatiemodel
+
+Het overkoepelende informatiemodel op hoofdlijnen.
+
+[![Open Gegevenslaag informatiemodel](assets/open-gegevenslaag.png)](assets/open-gegevenslaag.png))
+
 ## Overzicht
 
 | API-naam | Specificatie | Component | Status | VNG MijnServices |
